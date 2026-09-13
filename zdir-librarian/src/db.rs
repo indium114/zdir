@@ -83,7 +83,6 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             thread::sleep(Duration::from_secs(crate::util::HOUR as u64));
         }
     });
-    housekeeping_thread.join().unwrap();
 
     // MARK: comms thread
     let comms_db = db.clone();
@@ -91,16 +90,19 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
         info!("Starting comms thread");
 
         while let Ok(query) = rx.recv() {
+            let query = query.trim_end_matches('\n').to_string();
             match query.starts_with('/') {
                 true => {
                     let write_txn = comms_db.begin_write().unwrap();
                     {
                         let mut table = write_txn.open_table(TABLE).unwrap();
                         if table.get(&query).unwrap().is_none() {
-                            let _ = table.insert(query, (1.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
+                            info!(path = query, "Writing path to database");
+                            let _ = table.insert(&query, (1.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
                         }
                     }
                     write_txn.commit().unwrap();
+                    let _ = tx.send(query);
                 }
                 false => {
                     let read_txn = comms_db.begin_read().unwrap();
@@ -127,5 +129,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             }
         }
     });
+
+    housekeeping_thread.join().unwrap();
     comms_thread.join().unwrap();
 }
