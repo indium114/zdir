@@ -1,7 +1,7 @@
+use crate::util::matches;
 use tracing::{info, warn};
 use redb::{
   Database,
-  Error,
   ReadableDatabase,
   ReadableTable,
   TableDefinition,
@@ -47,9 +47,9 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
         loop {
             info!("Running housekeeping");
 
-            let write_tx = housekeeping_db.begin_write().unwrap();
+            let write_txn = housekeeping_db.begin_write().unwrap();
             {
-                let mut table = write_tx.open_table(TABLE).unwrap();
+                let mut table = write_txn.open_table(TABLE).unwrap();
 
                 let updated: Vec<(String, (f64, u64))> = table
                     .iter()
@@ -73,7 +73,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                     table.insert(k, v).unwrap();
                 }
             }
-            write_tx.commit().unwrap();
+            write_txn.commit().unwrap();
 
             info!("Finished housekeeping");
             thread::sleep(Duration::from_secs(crate::util::HOUR as u64));
@@ -83,8 +83,37 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
     housekeeping_thread.join().unwrap();
 
     // MARK: comms thread
+    let comms_db = db.clone();
     let comms_thread = thread::spawn(move || {
         info!("Starting comms thread");
+
+        while let Ok(query) = rx.recv() {
+            match query.starts_with('/') {
+                true => (),
+                false => {
+                    let read_txn = comms_db.begin_read().unwrap();
+                    let table = read_txn.open_table(TABLE).unwrap();
+
+                    let matches: Vec<String> = table
+                        .iter()
+                        .unwrap()
+                        .map(|entry| {
+                            let (path, value) = entry.unwrap();
+                            let path = path.value();
+                            let (frecency, last_accessed) = value.value();
+
+                            if matches(&path, query.split(' ').collect()) {
+                                path
+                            } else {
+                                "".to_string()
+                            }
+                        })
+                        .collect();
+                    let match_string = matches.join("**");
+                    let _ = tx.send(match_string);
+                }
+            }
+        }
     });
     comms_thread.join().unwrap();
 }

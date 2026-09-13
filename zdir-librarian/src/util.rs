@@ -1,4 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH}
+};
 
 pub const SECOND: u64 = 1;
 pub const MINUTE: u64 = 60 * SECOND;
@@ -34,4 +37,35 @@ pub fn rank(entry: Entry) -> Entry {
     }
 
     entry
+}
+
+pub fn matches(path: &str, args: Vec<&str>) -> bool {
+    if args.is_empty() {
+        return true;
+    }
+
+    let path_lower = path.to_lowercase();
+    let terms: Vec<String> = args.iter().map(|s| s.to_lowercase()).collect();
+
+    // ensure that terms are in order
+    let mut cursor = 0usize;
+
+    for term in &terms {
+        let Some(relative_pos) = path_lower[cursor..].find(term) else {
+            return false;
+        };
+
+        cursor += relative_pos + term.len();
+    }
+
+    // final term of query must match final directory in path
+    let final_term = terms.last().unwrap();
+    let final_term_component = final_term.rsplit('/').next().unwrap_or(final_term);
+
+    let stored_final_component = Path::new(&path_lower)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("");
+
+    stored_final_component.starts_with(final_term_component)
 }
