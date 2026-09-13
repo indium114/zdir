@@ -1,15 +1,17 @@
 use crate::util::matches;
-use tracing::{info, warn};
-use redb::{
-  Database,
-  ReadableDatabase,
-  ReadableTable,
-  TableDefinition,
+use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
+use std::{
+    fs,
+    path::Path,
+    sync::{Arc, mpsc},
+    thread,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use std::{fs, path::Path, sync::{Arc, mpsc}, thread, time::{Duration, SystemTime, UNIX_EPOCH}};
+use tracing::{info, warn};
 
 // NOTE: path, (frecency, last_accessed)
-const TABLE: TableDefinition<String, (f64, u64)> = TableDefinition::new("directories");
+const TABLE: TableDefinition<String, (f64, u64)> =
+    TableDefinition::new("directories");
 
 fn db_path() -> String {
     let home = dirs::home_dir()
@@ -24,7 +26,8 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
     let db: Database = match Path::new(&db_path()).exists() {
         true => {
             info!(path = db_path(), "Loading database");
-            Database::create(db_path()).expect("Failed to load database. Is it corrupted?")
+            Database::create(db_path())
+                .expect("Failed to load database. Is it corrupted?")
         }
         false => {
             warn!(path = db_path(), "Creating new database");
@@ -34,7 +37,8 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 fs::create_dir_all(parent).unwrap();
             }
             fs::File::create(path).unwrap();
-            Database::create(db_path()).expect("Failed to create database. Is the path writable?")
+            Database::create(db_path())
+                .expect("Failed to create database. Is the path writable?")
         }
     };
     let db = Arc::new(db);
@@ -78,7 +82,6 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             info!("Finished housekeeping");
             thread::sleep(Duration::from_secs(crate::util::HOUR as u64));
         }
-
     });
     housekeeping_thread.join().unwrap();
 
@@ -98,7 +101,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                         }
                     }
                     write_txn.commit().unwrap();
-                },
+                }
                 false => {
                     let read_txn = comms_db.begin_read().unwrap();
                     let table = read_txn.open_table(TABLE).unwrap();

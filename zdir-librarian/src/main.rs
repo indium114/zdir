@@ -1,4 +1,4 @@
-use std::{thread, sync::mpsc};
+use std::{sync::mpsc, thread};
 
 mod db;
 mod socket;
@@ -11,7 +11,8 @@ fn main() {
     tracing_subscriber::fmt().init();
 
     let db_thread = thread::spawn(move || db::database(db_tx, db_rx));
-    let socket_thread = thread::spawn(move || socket::socket(socket_tx, socket_rx));
+    let socket_thread =
+        thread::spawn(move || socket::socket(socket_tx, socket_rx));
 
     db_thread.join().unwrap();
     socket_thread.join().unwrap();

@@ -1,5 +1,5 @@
-use tracing::info;
 use std::sync::mpsc;
+use tracing::info;
 
 fn socket_path() -> String {
     "/tmp/zdir-".to_string() + &unsafe { libc::getuid().to_string() } + ".sock"
