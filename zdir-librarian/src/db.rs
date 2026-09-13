@@ -5,7 +5,7 @@ use std::{
     path::Path,
     sync::{Arc, mpsc},
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH},
 };
 use tracing::{info, warn};
 
@@ -18,6 +18,40 @@ fn db_path() -> String {
         .map(|p| p.to_string_lossy().into_owned())
         .unwrap_or_default();
     home + "/.local/share/zdir/zdir.db"
+}
+
+fn housekeep(housekeeping_db: Arc<Database>) {
+    info!("Running housekeeping");
+
+    let write_txn = housekeeping_db.begin_write().unwrap();
+    {
+        let mut table = write_txn.open_table(TABLE).unwrap();
+
+        let updated: Vec<(String, (f64, u64))> = table
+            .iter()
+            .unwrap()
+            .map(|entry| {
+                let (path, value) = entry.unwrap();
+                let path = path.value();
+                let (frecency, last_accessed) = value.value();
+
+                let entry = crate::util::rank(crate::util::Entry {
+                    path,
+                    frecency,
+                    last_accessed,
+                });
+
+                (entry.path, (entry.frecency, entry.last_accessed))
+            })
+            .collect();
+
+        for (k, v) in updated {
+            table.insert(k, v).unwrap();
+        }
+    }
+    write_txn.commit().unwrap();
+
+    info!("Finished housekeeping");
 }
 
 pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
@@ -42,47 +76,6 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
         }
     };
     let db = Arc::new(db);
-
-    // MARK: housekeeping thread
-    let housekeeping_db = db.clone();
-    let housekeeping_thread = thread::spawn(move || {
-        info!("Starting housekeeping thread");
-
-        loop {
-            info!("Running housekeeping");
-
-            let write_txn = housekeeping_db.begin_write().unwrap();
-            {
-                let mut table = write_txn.open_table(TABLE).unwrap();
-
-                let updated: Vec<(String, (f64, u64))> = table
-                    .iter()
-                    .unwrap()
-                    .map(|entry| {
-                        let (path, value) = entry.unwrap();
-                        let path = path.value();
-                        let (frecency, last_accessed) = value.value();
-
-                        let entry = crate::util::rank(crate::util::Entry {
-                            path,
-                            frecency,
-                            last_accessed,
-                        });
-
-                        (entry.path, (entry.frecency, entry.last_accessed))
-                    })
-                    .collect();
-
-                for (k, v) in updated {
-                    table.insert(k, v).unwrap();
-                }
-            }
-            write_txn.commit().unwrap();
-
-            info!("Finished housekeeping");
-            thread::sleep(Duration::from_secs(crate::util::HOUR));
-        }
-    });
 
     // MARK: comms thread
     let comms_db = db.clone();
@@ -109,6 +102,8 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 }
                 write_txn.commit().unwrap();
                 let _ = tx.send("ACK:".to_string());
+
+                housekeep(db.clone());
             } else {
                 match query.starts_with('/') {
                     true => {
@@ -151,6 +146,5 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
         }
     });
 
-    housekeeping_thread.join().unwrap();
     comms_thread.join().unwrap();
 }
