@@ -25,7 +25,6 @@ pub fn socket(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 let mut reader = BufReader::new(stream.try_clone().unwrap());
                 let mut message = String::new();
                 reader.read_line(&mut message).unwrap();
-                info!(msg = message, "Received message"); // DEBUG
 
                 let _ = tx.send(message);
 
