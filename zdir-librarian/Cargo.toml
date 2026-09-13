@@ -1,0 +1,10 @@
+[package]
+name = "zdir-librarian"
+version = "0.1.0"
+edition = "2024"
+description = "The background daemon and bookkeeper for zdir"
+license = "Unlicense"
+repository = "https://github.com/indium114/zdir"
+
+[dependencies]
+redb = "4.2.0"

@@ -3,3 +3,4 @@ members = [
   "zdir",
   "zdir-librarian",
 ]
+resolver = "3"
