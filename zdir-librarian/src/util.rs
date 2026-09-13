@@ -8,9 +8,9 @@ pub const WEEK: u64 = 7 * DAY;
 pub const MONTH: u64 = 30 * DAY;
 
 pub struct Entry {
-    path: String,
-    frecency: f64,
-    last_accessed: u64,
+    pub path: String,
+    pub frecency: f64,
+    pub last_accessed: u64,
 }
 
 pub fn rank(entry: Entry) -> Entry {
