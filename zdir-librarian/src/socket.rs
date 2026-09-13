@@ -3,7 +3,7 @@ use std::{
     path::Path,
     fs,
     io::{BufRead, BufReader, Write},
-    os::unix::net::{UnixListener, UnixStream},
+    os::unix::net::UnixListener,
 };
 use tracing::{info, error};
 

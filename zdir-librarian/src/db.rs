@@ -80,7 +80,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             write_txn.commit().unwrap();
 
             info!("Finished housekeeping");
-            thread::sleep(Duration::from_secs(crate::util::HOUR as u64));
+            thread::sleep(Duration::from_secs(crate::util::HOUR));
         }
     });
 
@@ -97,10 +97,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 {
                     let mut table = write_txn.open_table(TABLE).unwrap();
 
-                    let current: Option<(f64, u64)> = match table.get(path.to_string()).unwrap() {
-                        Some(v) => Some(v.value()),
-                        None => None,
-                    };
+                    let current: Option<(f64, u64)> = table.get(path.to_string()).unwrap().map(|v| v.value());
                     let new = match current {
                         Some((rank, _)) => rank + 1.0,
                         None => 1.0,
@@ -133,7 +130,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                         .map(|entry| {
                             let (path, value) = entry.unwrap();
                             let path = path.value();
-                            let (frecency, last_accessed) = value.value();
+                            let (frecency, _last_accessed) = value.value();
 
                             if matches(&path, query.split(' ').collect()) {
                                 frecency.to_string() + ":" + &path
