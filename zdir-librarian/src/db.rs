@@ -86,6 +86,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
 
     // MARK: comms thread
     let comms_db = db.clone();
+    #[allow(unused_variables)]
     let comms_thread = thread::spawn(move || {
         info!("Starting comms thread");
 
