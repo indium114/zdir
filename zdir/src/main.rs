@@ -1,3 +1,48 @@
+use std::{io::{Read, Write}, os::unix::net::UnixStream, path::Path, process};
+
+mod tui;
+mod parser;
+
+fn socket_path() -> String {
+    "/tmp/zdir-".to_string() + &unsafe { libc::getuid().to_string() } + ".sock"
+}
+
 fn main() {
-    println!("Hello, world!");
+    let query: String = std::env::args().skip(1).collect::<Vec<String>>().join(" ");
+
+    if !Path::new(&socket_path()).exists() {
+        usefulog::err(format!("{} does not exist. zdir-librarian is likely not running", socket_path()));
+        process::exit(1);
+    }
+
+    let mut socket = UnixStream::connect(socket_path()).unwrap();
+    socket.write(format!("{query}\n").as_bytes()).unwrap();
+
+    let mut buffer = [0u8; 4096];
+    let count = socket.read(&mut buffer).unwrap();
+
+    let mut results = crate::parser::parse_response(&String::from_utf8_lossy(&buffer[..count]));
+    results.sort_unstable_by(|a, b| b.0.total_cmp(&a.0));
+
+    if results.len() == 0 {
+       usefulog::err("No matches.");
+       process::exit(1);
+    }
+
+    let close = match results.get(0).zip(results.get(1)) {
+        Some((a, b)) => a.0 - b.0 < 200.0,
+        None => false,
+    };
+
+    match close {
+        true => (),
+        false => {
+            let (_, path) = results.get(0).unwrap();
+            let mut pick = UnixStream::connect(socket_path()).unwrap();
+            let _ = pick.write(format!("PICK:{path}\n").as_bytes());
+            let mut ack = [0u8; 4096];
+            let _ = pick.read(&mut ack).unwrap();
+            println!("{path}")
+        }
+    }
 }
