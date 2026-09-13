@@ -22,7 +22,7 @@ pub fn rank(entry: Entry) -> Entry {
     // thanks to zoxide for this ranking method
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("You've travelled back to... before 1969? How do you even have a computer?")
+        .expect("You've travelled back to... before 1970? How do you even have a computer?")
         .as_secs();
 
     let duration = now.saturating_sub(entry.last_accessed);

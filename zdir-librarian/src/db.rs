@@ -6,7 +6,7 @@ use redb::{
   ReadableTable,
   TableDefinition,
 };
-use std::{fs, path::Path, sync::{Arc, mpsc}, thread, time::Duration};
+use std::{fs, path::Path, sync::{Arc, mpsc}, thread, time::{Duration, SystemTime, UNIX_EPOCH}};
 
 // NOTE: path, (frecency, last_accessed)
 const TABLE: TableDefinition<String, (f64, u64)> = TableDefinition::new("directories");
@@ -89,7 +89,16 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
 
         while let Ok(query) = rx.recv() {
             match query.starts_with('/') {
-                true => (),
+                true => {
+                    let write_txn = comms_db.begin_write().unwrap();
+                    {
+                        let mut table = write_txn.open_table(TABLE).unwrap();
+                        if table.get(&query).unwrap().is_none() {
+                            let _ = table.insert(query, (1.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
+                        }
+                    }
+                    write_txn.commit().unwrap();
+                },
                 false => {
                     let read_txn = comms_db.begin_read().unwrap();
                     let table = read_txn.open_table(TABLE).unwrap();
