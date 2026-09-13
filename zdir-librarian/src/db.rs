@@ -91,18 +91,37 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
 
         while let Ok(query) = rx.recv() {
             let query = query.trim_end_matches('\n').to_string();
-            match query.starts_with('/') {
+            if query.starts_with("PICK:") {
+                let path = query.strip_prefix("PICK:").unwrap();
+                let write_txn = comms_db.begin_write().unwrap();
+                {
+                    let mut table = write_txn.open_table(TABLE).unwrap();
+
+                    let current: Option<(f64, u64)> = match table.get(path.to_string()).unwrap() {
+                        Some(v) => Some(v.value()),
+                        None => None,
+                    };
+                    let new = match current {
+                        Some((rank, _)) => rank + 1.0,
+                        None => 1.0,
+                    };
+
+                    let _ = table.insert(path.to_string(), (new, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
+                }
+                write_txn.commit().unwrap();
+                let _ = tx.send("ACK:".to_string());
+            } else { match query.starts_with('/') {
                 true => {
                     let write_txn = comms_db.begin_write().unwrap();
                     {
                         let mut table = write_txn.open_table(TABLE).unwrap();
                         if table.get(&query).unwrap().is_none() {
                             info!(path = query, "Writing path to database");
-                            let _ = table.insert(&query, (1.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
+                            let _ = table.insert(&query, (0.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
                         }
                     }
                     write_txn.commit().unwrap();
-                    let _ = tx.send("1.0:".to_owned() + &query);
+                    let _ = tx.send("0.0:".to_owned() + &query);
                 }
                 false => {
                     let read_txn = comms_db.begin_read().unwrap();
@@ -126,7 +145,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                     let match_string = matches.join("**");
                     let _ = tx.send(match_string);
                 }
-            }
+            }}
         }
     });
 
