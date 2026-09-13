@@ -2,6 +2,7 @@ use std::thread;
 
 mod db;
 mod socket;
+mod util;
 
 fn main() {
     tracing_subscriber::fmt().init();
