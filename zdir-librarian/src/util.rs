@@ -69,5 +69,7 @@ pub fn matches(path: &str, args: Vec<&str>) -> bool {
         .and_then(|name| name.to_str())
         .unwrap_or("");
 
-    stored_final_component.starts_with(final_term_component)
+    stored_final_component
+        .split('-')
+        .any(|part| part.starts_with(final_term_component))
 }
