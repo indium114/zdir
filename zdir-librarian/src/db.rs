@@ -102,7 +102,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                         }
                     }
                     write_txn.commit().unwrap();
-                    let _ = tx.send(query);
+                    let _ = tx.send("1.0:".to_owned() + &query);
                 }
                 false => {
                     let read_txn = comms_db.begin_read().unwrap();
@@ -117,7 +117,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                             let (frecency, last_accessed) = value.value();
 
                             if matches(&path, query.split(' ').collect()) {
-                                path
+                                frecency.to_string() + ":" + &path
                             } else {
                                 "".to_string()
                             }
