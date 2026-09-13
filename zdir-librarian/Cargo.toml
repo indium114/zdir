@@ -9,3 +9,5 @@ repository = "https://github.com/indium114/zdir"
 [dependencies]
 libc = "0.2.189"
 redb = "4.2.0"
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
