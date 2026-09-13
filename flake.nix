@@ -27,6 +27,8 @@
             rust-analyzer
             clippy
             pkg-config
+
+            socat
           ];
         };
 
