@@ -6,7 +6,7 @@ use redb::{
   ReadableTable,
   TableDefinition,
 };
-use std::{fs, path::Path};
+use std::{fs, path::Path, sync::mpsc};
 
 // NOTE: path, (frecency, last_accessed)
 const TABLE: TableDefinition<String, (f64, u64)> = TableDefinition::new("directories");
@@ -18,7 +18,7 @@ fn db_path() -> String {
     home + "/.local/share/zdir/zdir.db"
 }
 
-pub fn database() {
+pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
     info!("Starting database");
 
     let db: Database = match Path::new(&db_path()).exists() {
