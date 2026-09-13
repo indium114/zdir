@@ -97,7 +97,8 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 {
                     let mut table = write_txn.open_table(TABLE).unwrap();
 
-                    let current: Option<(f64, u64)> = table.get(path.to_string()).unwrap().map(|v| v.value());
+                    let current: Option<(f64, u64)> =
+                        table.get(path.to_string()).unwrap().map(|v| v.value());
                     let new = match current {
                         Some((rank, _)) => rank + 1.0,
                         None => 1.0,
@@ -107,42 +108,45 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                 }
                 write_txn.commit().unwrap();
                 let _ = tx.send("ACK:".to_string());
-            } else { match query.starts_with('/') {
-                true => {
-                    let write_txn = comms_db.begin_write().unwrap();
-                    {
-                        let mut table = write_txn.open_table(TABLE).unwrap();
-                        if table.get(&query).unwrap().is_none() {
-                            info!(path = query, "Writing path to database");
-                            let _ = table.insert(&query, (0.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
-                        }
-                    }
-                    write_txn.commit().unwrap();
-                    let _ = tx.send("0.0:".to_owned() + &query);
-                }
-                false => {
-                    let read_txn = comms_db.begin_read().unwrap();
-                    let table = read_txn.open_table(TABLE).unwrap();
-
-                    let matches: Vec<String> = table
-                        .iter()
-                        .unwrap()
-                        .map(|entry| {
-                            let (path, value) = entry.unwrap();
-                            let path = path.value();
-                            let (frecency, _last_accessed) = value.value();
-
-                            if matches(&path, query.split(' ').collect()) {
-                                frecency.to_string() + ":" + &path
-                            } else {
-                                "".to_string()
+            } else {
+                match query.starts_with('/') {
+                    true => {
+                        let write_txn = comms_db.begin_write().unwrap();
+                        {
+                            let mut table =
+                                write_txn.open_table(TABLE).unwrap();
+                            if table.get(&query).unwrap().is_none() {
+                                info!(path = query, "Writing path to database");
+                                let _ = table.insert(&query, (0.0, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
                             }
-                        })
-                        .collect();
-                    let match_string = matches.join("**");
-                    let _ = tx.send(match_string);
+                        }
+                        write_txn.commit().unwrap();
+                        let _ = tx.send("0.0:".to_owned() + &query);
+                    }
+                    false => {
+                        let read_txn = comms_db.begin_read().unwrap();
+                        let table = read_txn.open_table(TABLE).unwrap();
+
+                        let matches: Vec<String> = table
+                            .iter()
+                            .unwrap()
+                            .map(|entry| {
+                                let (path, value) = entry.unwrap();
+                                let path = path.value();
+                                let (frecency, _last_accessed) = value.value();
+
+                                if matches(&path, query.split(' ').collect()) {
+                                    frecency.to_string() + ":" + &path
+                                } else {
+                                    "".to_string()
+                                }
+                            })
+                            .collect();
+                        let match_string = matches.join("**");
+                        let _ = tx.send(match_string);
+                    }
                 }
-            }}
+            }
         }
     });
 

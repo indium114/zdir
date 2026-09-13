@@ -1,11 +1,11 @@
 use std::{
-    sync::mpsc,
-    path::Path,
     fs,
     io::{BufRead, BufReader, Write},
     os::unix::net::UnixListener,
+    path::Path,
+    sync::mpsc,
 };
-use tracing::{info, error};
+use tracing::{error, info};
 
 fn socket_path() -> String {
     "/tmp/zdir-".to_string() + &unsafe { libc::getuid().to_string() } + ".sock"
@@ -34,7 +34,7 @@ pub fn socket(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                     stream.flush().unwrap();
                     break;
                 }
-            },
+            }
             Err(e) => error!(err = e.to_string(), "Error while listening"),
         }
     }
