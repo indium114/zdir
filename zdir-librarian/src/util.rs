@@ -36,6 +36,7 @@ pub fn rank(entry: Entry) -> Entry {
         entry.frecency *= 0.25
     }
 
+    entry.last_accessed = now;
     entry
 }
 
