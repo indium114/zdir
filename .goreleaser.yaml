@@ -17,18 +17,42 @@ before:
     - cargo fetch --locked
 
 builds:
-  - builder: rust
+  - id: zdir
+    builder: rust
+    binary: "zdir"
     flags:
       - --release
+      - --package=zdir
+    targets:
+      - x86_64-unknown-linux-musl
+      - aarch64-unknown-linux-musl
+  - id: zdir-librarian
+    builder: rust
+    binary: "zdir-librarian"
+    flags:
+      - --release
+      - --package=zdir-librarian
     targets:
       - x86_64-unknown-linux-musl
       - aarch64-unknown-linux-musl
 
 archives:
-  - formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
+  - id: "zdir"
+    formats: [binary]
+    builds:
+      - zdir
     name_template: >-
-      {{ .ProjectName }}_
+      {{ .Binary }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+  - id: "zdir-librarian"
+    formats: [binary]
+    builds:
+      - zdir-librarian
+    name_template: >-
+      {{ .Binary }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
