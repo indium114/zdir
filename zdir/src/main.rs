@@ -40,7 +40,10 @@ fn main() {
     };
 
     match close {
-        true => (),
+        true => {
+            let selection = crate::tui::tui(results);
+            println!("{selection}")
+        },
         false => {
             let (_, path) = results.get(0).unwrap();
             let mut pick = UnixStream::connect(socket_path()).unwrap();
