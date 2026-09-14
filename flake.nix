@@ -10,13 +10,21 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, naersk }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      naersk,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
 
-        naersk' = pkgs.callPackage naersk {};
-      in {
+        naersk' = pkgs.callPackage naersk { };
+      in
+      {
         devShells.default = pkgs.mkShell {
           name = "rust-devshell";
 
@@ -34,11 +42,19 @@
 
         packages.zdir = naersk'.buildPackage {
           src = ./.;
+          postInstall = ''
+            mkdir -p $out/share/zdir
+            cp shell/zdir.nu $out/share/zdir/zdir.nu
+          '';
         };
 
         apps.zdir = {
           type = "app";
           program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.zdir}/bin/zdir";
         };
-      });
+      }
+    )
+    // {
+      homeModules.default = import ./home.nix { inherit self; };
+    };
 }
