@@ -14,7 +14,6 @@ _zdir_ is a blazingly-faster `cd` alternative, inspired by [zoxide](https://gith
 | min    | 5ms 768µs 335ns  |
 | max    | 18ms 768µs 812ns |
 | std    | 1ms 826µs 13ns   |
-| ------ | ---------------- |
 
 ### zdir benchmark
 
@@ -24,7 +23,6 @@ _zdir_ is a blazingly-faster `cd` alternative, inspired by [zoxide](https://gith
 | min    | 3ms 246µs 124ns  |
 | max    | 12ms 194µs 279ns |
 | std    | 1ms 649µs 303ns  |
-| ------ | ---------------- |
 
 ## setup
 
