@@ -15,7 +15,9 @@ fn socket_path() -> String {
 
 fn main() {
     let query: String =
-        std::env::args().skip(1).collect::<Vec<String>>().join(" ");
+        std::env::args().skip(2).collect::<Vec<String>>().join(" ");
+    let path: String =
+        (&std::env::args().collect::<Vec<String>>()[1]).to_string();
 
     let query: String = match fs::canonicalize(&query) {
         Ok(p) => p
@@ -61,15 +63,15 @@ fn main() {
             let _ = pick.write(format!("PICK:{selection}\n").as_bytes());
             let mut ack = [0u8; 4096];
             let _ = pick.read(&mut ack).unwrap();
-            println!("{selection}")
+            fs::write(path, selection).unwrap();
         }
         false => {
-            let (_, path) = results.first().unwrap();
+            let (_, selection) = results.first().unwrap();
             let mut pick = UnixStream::connect(socket_path()).unwrap();
-            let _ = pick.write(format!("PICK:{path}\n").as_bytes());
+            let _ = pick.write(format!("PICK:{selection}\n").as_bytes());
             let mut ack = [0u8; 4096];
             let _ = pick.read(&mut ack).unwrap();
-            println!("{path}")
+            fs::write(path, selection).unwrap();
         }
     }
 }
