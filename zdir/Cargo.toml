@@ -1,10 +1,10 @@
 [package]
 name = "zdir"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "A blazingly-faster cd alternative"
-license = "Unlicense"
-repository = "https://github.com/indium114/zdir"
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 dirs = "7.0.0"
