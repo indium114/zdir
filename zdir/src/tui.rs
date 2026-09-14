@@ -3,7 +3,14 @@ use ratatui::{
     TerminalOptions,
     Viewport,
     DefaultTerminal,
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
+    crossterm::{
+        execute,
+        event::{self, Event, KeyCode, KeyEventKind},
+        terminal::{
+            EnterAlternateScreen,
+            LeaveAlternateScreen,
+        }
+    },
     widgets::{
         Block, Borders, BorderType, List, ListItem, ListState
     },
@@ -107,12 +114,16 @@ impl App {
 }
 
 pub fn tui(results: Vec<(f64, String)>) -> String {
+    let mut stdout = std::io::stdout();
+    let _ = execute!(stdout, EnterAlternateScreen);
+
     let mut terminal = ratatui::init_with_options(TerminalOptions {
         viewport: Viewport::Inline(10),
     });
     let final_result = App::new(results).run(&mut terminal);
 
     ratatui::restore();
+    let _ = execute!(stdout, LeaveAlternateScreen);
 
     final_result
 }
