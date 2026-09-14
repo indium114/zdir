@@ -1,4 +1,4 @@
-use std::{io::{Read, Write}, os::unix::net::UnixStream, path::Path, process};
+use std::{fs, io::{Read, Write}, os::unix::net::UnixStream, path::Path, process};
 
 mod tui;
 mod parser;
@@ -9,6 +9,11 @@ fn socket_path() -> String {
 
 fn main() {
     let query: String = std::env::args().skip(1).collect::<Vec<String>>().join(" ");
+
+    let query: String = match fs::canonicalize(&query) {
+        Ok(p) => p.into_os_string().into_string().expect("Path is not valid UTF-8"),
+        _ => query,
+    };
 
     if !Path::new(&socket_path()).exists() {
         usefulog::err(format!("{} does not exist. zdir-librarian is likely not running", socket_path()));
