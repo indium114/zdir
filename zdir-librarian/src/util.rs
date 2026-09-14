@@ -9,6 +9,7 @@ pub const HOUR: u64 = 60 * MINUTE;
 pub const DAY: u64 = 24 * HOUR;
 pub const WEEK: u64 = 7 * DAY;
 
+#[derive(Clone)]
 pub struct Entry {
     pub path: String,
     pub frecency: f64,
@@ -35,6 +36,7 @@ pub fn rank(entry: Entry) -> Entry {
         entry.frecency *= 0.25
     }
 
+    entry.last_accessed = now;
     entry
 }
 

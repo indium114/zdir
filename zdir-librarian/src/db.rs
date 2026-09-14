@@ -1,4 +1,4 @@
-use crate::util::matches;
+use crate::util::{matches, Entry};
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::{
     fs,
@@ -20,38 +20,18 @@ fn db_path() -> String {
     home + "/.local/share/zdir/zdir.db"
 }
 
-fn housekeep(housekeeping_db: Arc<Database>) {
-    info!("Running housekeeping");
+fn score(db: Arc<Database>, entry: Entry) {
+    info!("Scoring");
 
-    let write_txn = housekeeping_db.begin_write().unwrap();
+    let write_txn = db.begin_write().unwrap();
     {
         let mut table = write_txn.open_table(TABLE).unwrap();
-
-        let updated: Vec<(String, (f64, u64))> = table
-            .iter()
-            .unwrap()
-            .map(|entry| {
-                let (path, value) = entry.unwrap();
-                let path = path.value();
-                let (frecency, last_accessed) = value.value();
-
-                let entry = crate::util::rank(crate::util::Entry {
-                    path,
-                    frecency,
-                    last_accessed,
-                });
-
-                (entry.path, (entry.frecency, entry.last_accessed))
-            })
-            .collect();
-
-        for (k, v) in updated {
-            table.insert(k, v).unwrap();
-        }
+        let ranked_entry = crate::util::rank(entry);
+        let _ = table.insert(ranked_entry.path, (ranked_entry.frecency, ranked_entry.last_accessed));
     }
     write_txn.commit().unwrap();
 
-    info!("Finished housekeeping");
+    info!("Finished scoring");
 }
 
 pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
@@ -88,6 +68,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             if query.starts_with("PICK:") {
                 let path = query.strip_prefix("PICK:").unwrap();
                 let write_txn = comms_db.begin_write().unwrap();
+                let entry: Entry;
                 {
                     let mut table = write_txn.open_table(TABLE).unwrap();
 
@@ -98,12 +79,18 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                         None => 1.0,
                     };
 
-                    let _ = table.insert(path.to_string(), (new, SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs()));
+                    entry = Entry {
+                        path: path.to_string(),
+                        frecency: new,
+                        last_accessed: SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs(),
+                    };
+
+                    let _ = table.insert(entry.path.clone(), (entry.frecency.clone(), entry.last_accessed.clone()));
                 }
                 write_txn.commit().unwrap();
                 let _ = tx.send("ACK:".to_string());
 
-                housekeep(db.clone());
+                score(db.clone(), entry.clone());
             } else {
                 match query.starts_with('/') {
                     true => {
