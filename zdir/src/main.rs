@@ -42,6 +42,10 @@ fn main() {
     match close {
         true => {
             let selection = crate::tui::tui(results);
+            let mut pick = UnixStream::connect(socket_path()).unwrap();
+            let _ = pick.write(format!("PICK:{selection}\n").as_bytes());
+            let mut ack = [0u8; 4096];
+            let _ = pick.read(&mut ack).unwrap();
             println!("{selection}")
         },
         false => {
