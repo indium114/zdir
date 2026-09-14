@@ -14,7 +14,12 @@ def --env --wrapped __zdir_zd [...args: string] {
     [] => {'~'},
     ['-'] => {'-'},
     _ => {
-      zdir ...$args | str trim -r -c "\n"
+      let tmp = (mktemp --tmpdir zdir_XXXXXX)
+      (^zdir $tmp ...$args)
+      let selection = (open $tmp | str trim -r -c "\n")
+      rm $tmp
+
+      $selection
     }
   }
 
