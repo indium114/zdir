@@ -29,12 +29,12 @@ fn main() {
     let mut results = crate::parser::parse_response(&String::from_utf8_lossy(&buffer[..count]));
     results.sort_unstable_by(|a, b| b.0.total_cmp(&a.0));
 
-    if results.len() == 0 {
+    if results.is_empty() {
        usefulog::err("No matches.");
        process::exit(1);
     }
 
-    let close = match results.get(0).zip(results.get(1)) {
+    let close = match results.first().zip(results.get(1)) {
         Some((a, b)) => a.0 - b.0 < 200.0,
         None => false,
     };
@@ -49,7 +49,7 @@ fn main() {
             println!("{selection}")
         },
         false => {
-            let (_, path) = results.get(0).unwrap();
+            let (_, path) = results.first().unwrap();
             let mut pick = UnixStream::connect(socket_path()).unwrap();
             let _ = pick.write(format!("PICK:{path}\n").as_bytes());
             let mut ack = [0u8; 4096];

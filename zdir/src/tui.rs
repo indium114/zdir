@@ -89,26 +89,26 @@ impl App {
                     KeyCode::Esc => process::exit(-1),
                     KeyCode::Up => {
                         self.state.select_previous();
-                        return "".to_string();
+                        "".to_string()
                     },
                     KeyCode::Down => {
                         self.state.select_next();
-                        return "".to_string();
+                        "".to_string()
                     },
                     KeyCode::Enter => {
                         if let Some(i) = self.state.selected()
                             && let Some((_, selection)) = self.results.get(i)
                         {
                             self.running = false;
-                            return selection.to_string();
+                            selection.to_string()
                         } else {
-                            return "".to_string();
+                            "".to_string()
                         }
                     },
-                    _ => return "".to_string(),
+                    _ => "".to_string(),
                 }
             }
-            _ => return "".to_string(),
+            _ => "".to_string(),
         }
     }
 }
