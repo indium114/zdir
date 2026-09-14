@@ -1,10 +1,14 @@
 # zdir
 
-_zdir_ is a blazingly-faster `cd` alternative, inspired by [zoxide](https://github.com/ajeetdsouza/zoxide).
+_zdir_ (pronounced 'zee-dir', like 'cedar') is a blazingly-faster `cd` alternative, inspired by [zoxide](https://github.com/ajeetdsouza/zoxide).
+
+It uses a background daemon and socket instead of running everything synchronously when you `z` or `cd` into a directory, offering blazingly-fast speeds even on resource-constrained computers.
+
+_zdir_ also features a TUI picker when a query has multiple results with a similar 'frecency' score.
 
 ## benchmarks
 
-> as of commit `212325d1`, using nushell 0.115.1
+> as of commit `212325d1`, using the `bench.nu` script on **nushell 0.115.1**
 
 ### zoxide benchmark
 
@@ -25,6 +29,40 @@ _zdir_ is a blazingly-faster `cd` alternative, inspired by [zoxide](https://gith
 | std    | 1ms 649µs 303ns  |
 
 ## setup
+
+### with home-manager
+
+Add the repo to your flake inputs...
+
+```nix
+{
+  inputs = {
+    # ...
+    zdir = {
+      url = "github:indium114/zdir";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+}
+```
+
+And configure it in home-manager...
+
+```nix
+{
+  inputs,
+  ...
+}:
+
+{
+
+  programs.zdir = {
+    enable = true; # installs the zdir binary and sets up the systemd user service
+    enableNushellIntegration = true; # adds the integration script to nushell
+  };
+
+}
+```
 
 ### setting up zdir-librarian, the background daemon
 
