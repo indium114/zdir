@@ -1,25 +1,13 @@
 use ratatui::{
-    Frame,
-    TerminalOptions,
-    Viewport,
-    DefaultTerminal,
+    DefaultTerminal, Frame, TerminalOptions, Viewport,
     crossterm::{
-        execute,
         event::{self, Event, KeyCode, KeyEventKind},
-        terminal::{
-            EnterAlternateScreen,
-            LeaveAlternateScreen,
-        }
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen},
     },
-    widgets::{
-        Block, Borders, BorderType, List, ListItem, ListState
-    },
-    style::{
-        Color, Style
-    },
-    text::{
-        Line, Span
-    },
+    style::{Color, Style},
+    text::{Line, Span},
+    widgets::{Block, BorderType, Borders, List, ListItem, ListState},
 };
 use std::process;
 
@@ -44,9 +32,7 @@ impl App {
         let mut selected: String = String::new();
 
         while self.running {
-            terminal.draw(|frame| {
-                self.render(frame)
-            }).unwrap();
+            terminal.draw(|frame| self.render(frame)).unwrap();
             selected = self.keybinds();
         }
 
@@ -90,11 +76,11 @@ impl App {
                     KeyCode::Up => {
                         self.state.select_previous();
                         "".to_string()
-                    },
+                    }
                     KeyCode::Down => {
                         self.state.select_next();
                         "".to_string()
-                    },
+                    }
                     KeyCode::Enter => {
                         if let Some(i) = self.state.selected()
                             && let Some((_, selection)) = self.results.get(i)
@@ -104,7 +90,7 @@ impl App {
                         } else {
                             "".to_string()
                         }
-                    },
+                    }
                     _ => "".to_string(),
                 }
             }

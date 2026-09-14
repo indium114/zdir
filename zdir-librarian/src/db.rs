@@ -1,4 +1,4 @@
-use crate::util::{matches, Entry};
+use crate::util::{Entry, matches};
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::{
     fs,
@@ -27,7 +27,10 @@ fn score(db: Arc<Database>, entry: Entry) {
     {
         let mut table = write_txn.open_table(TABLE).unwrap();
         let ranked_entry = crate::util::rank(entry);
-        let _ = table.insert(ranked_entry.path, (ranked_entry.frecency, ranked_entry.last_accessed));
+        let _ = table.insert(
+            ranked_entry.path,
+            (ranked_entry.frecency, ranked_entry.last_accessed),
+        );
     }
     write_txn.commit().unwrap();
 
@@ -85,7 +88,10 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                         last_accessed: SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs(),
                     };
 
-                    let _ = table.insert(entry.path.clone(), (entry.frecency.clone(), entry.last_accessed.clone()));
+                    let _ = table.insert(
+                        entry.path.clone(),
+                        (entry.frecency.clone(), entry.last_accessed.clone()),
+                    );
                 }
                 write_txn.commit().unwrap();
                 let _ = tx.send("ACK:".to_string());
