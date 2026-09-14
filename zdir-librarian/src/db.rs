@@ -90,7 +90,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
 
                     let _ = table.insert(
                         entry.path.clone(),
-                        (entry.frecency.clone(), entry.last_accessed.clone()),
+                        (entry.frecency, entry.last_accessed),
                     );
                 }
                 write_txn.commit().unwrap();

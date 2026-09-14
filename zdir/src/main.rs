@@ -17,7 +17,7 @@ fn main() {
     let query: String =
         std::env::args().skip(2).collect::<Vec<String>>().join(" ");
     let path: String =
-        (&std::env::args().collect::<Vec<String>>()[1]).to_string();
+        std::env::args().collect::<Vec<String>>()[1].to_string();
 
     let query: String = match fs::canonicalize(&query) {
         Ok(p) => p
