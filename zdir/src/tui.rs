@@ -1,10 +1,6 @@
 use ratatui::{
     DefaultTerminal, Frame, TerminalOptions, Viewport,
-    crossterm::{
-        event::{self, Event, KeyCode, KeyEventKind},
-        execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen},
-    },
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, ListState},
@@ -103,7 +99,7 @@ pub fn tui(results: Vec<(f64, String)>) -> String {
     let mut terminal = ratatui::init_with_options(TerminalOptions {
         viewport: Viewport::Inline(10),
     });
-    let final_result = App::new(results).run(&mut terminal);
+    
 
-    final_result
+    App::new(results).run(&mut terminal)
 }
