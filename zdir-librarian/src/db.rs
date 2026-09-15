@@ -70,33 +70,24 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
             let query = query.trim_end_matches('\n').to_string();
             if query.starts_with("PICK:") {
                 let path = query.strip_prefix("PICK:").unwrap();
-                let write_txn = comms_db.begin_write().unwrap();
-                let entry: Entry;
-                {
-                    let mut table = write_txn.open_table(TABLE).unwrap();
+                let read_txn = comms_db.begin_read().unwrap();
+                let table = read_txn.open_table(TABLE).unwrap();
 
-                    let current: Option<(f64, u64)> =
-                        table.get(path.to_string()).unwrap().map(|v| v.value());
-                    let new = match current {
-                        Some((rank, _)) => rank + 1.0,
-                        None => 1.0,
-                    };
+                let current = table
+                    .get(path.to_string())
+                    .unwrap()
+                    .map(|v| v.value())
+                    .unwrap_or((0.0, 0));
 
-                    entry = Entry {
-                        path: path.to_string(),
-                        frecency: new,
-                        last_accessed: SystemTime::now().duration_since(UNIX_EPOCH).expect("You've travelled back to... before 1970? How do you even have a computer?").as_secs(),
-                    };
+                let entry = Entry {
+                    path: path.to_string(),
+                    frecency: current.0,
+                    last_accessed: current.1,
+                };
 
-                    let _ = table.insert(
-                        entry.path.clone(),
-                        (entry.frecency, entry.last_accessed),
-                    );
-                }
-                write_txn.commit().unwrap();
                 let _ = tx.send("ACK:".to_string());
 
-                score(db.clone(), entry.clone());
+                score(db.clone(), entry);
             } else {
                 match query.starts_with('/') {
                     true => {

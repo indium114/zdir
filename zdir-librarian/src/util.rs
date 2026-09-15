@@ -26,16 +26,17 @@ pub fn rank(entry: Entry) -> Entry {
         .as_secs();
 
     let duration = now.saturating_sub(entry.last_accessed);
-    if duration < HOUR {
-        entry.frecency *= 4.0
+    let factor = if duration < HOUR {
+        4.0
     } else if duration < DAY {
-        entry.frecency *= 2.0
+        2.0
     } else if duration < WEEK {
-        entry.frecency *= 0.5
+        0.5
     } else {
-        entry.frecency *= 0.25
+        0.25
     }
 
+    entry.frecency = entry.frecency * factor + 1.0;
     entry.last_accessed = now;
     entry
 }
