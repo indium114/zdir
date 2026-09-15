@@ -1,10 +1,12 @@
 # zdir
 
+![preview of zdir's tui directory selector](assets/preview.png)
+
 _zdir_ (pronounced 'zee-dir', like 'cedar') is a blazingly-faster `cd` alternative, inspired by [zoxide](https://github.com/ajeetdsouza/zoxide).
 
 It uses a background daemon and socket instead of running everything synchronously when you `z` or `cd` into a directory, offering blazingly-fast speeds even on resource-constrained computers.
 
-_zdir_ also features a TUI picker when a query has multiple results with a similar 'frecency' score.
+_zdir_ also features a TUI picker when a query has multiple results with a similar 'frecency' score (see the above image).
 
 ## benchmarks
 
