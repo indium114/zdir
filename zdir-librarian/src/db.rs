@@ -9,6 +9,9 @@ use std::{
 };
 use tracing::{info, warn};
 
+const MAXAGE: f64 = 10_000.0;
+const AGING_TARGET: f64 = 0.9 * MAXAGE;
+
 // NOTE: path, (frecency, last_accessed)
 const TABLE: TableDefinition<String, (f64, u64)> =
     TableDefinition::new("directories");
@@ -34,7 +37,42 @@ fn score(db: Arc<Database>, entry: Entry) {
     }
     write_txn.commit().unwrap();
 
+    age(db);
+
     info!("Finished scoring");
+}
+
+fn age(db: Arc<Database>) {
+    info!("Aging");
+
+    let write_txn = db.begin_write().unwrap();
+    {
+        let mut table = write_txn.open_table(TABLE).unwrap();
+
+        let entries: Vec<(String, (f64, u64))> = table
+            .iter()
+            .unwrap()
+            .map(|e| {
+               let (path, value) = e.unwrap();
+               (path.value().to_string(), value.value())
+            })
+            .collect();
+
+        let total: f64 = entries.iter().map(|(_, (f, _))| f).sum();
+        if total > MAXAGE {
+            let k = AGING_TARGET / total;
+            for (path, (frecency, last_accessed)) in entries {
+                let new_frecency = frecency * k;
+                if new_frecency < 1.0 {
+                    let _ = table.remove(&path);
+                } else {
+                    let _ = table.insert(&path, (new_frecency, last_accessed));
+                }
+            }
+        }
+    }
+
+    write_txn.commit().unwrap();
 }
 
 pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
