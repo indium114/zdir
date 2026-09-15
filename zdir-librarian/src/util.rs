@@ -16,17 +16,16 @@ pub struct Entry {
     pub last_accessed: u64,
 }
 
-pub fn rank(entry: Entry) -> Entry {
-    let mut entry = entry;
-
-    // thanks to zoxide for this ranking method
-    let now = SystemTime::now()
+pub fn now_secs() -> u64 {
+    SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("You've travelled back to... before 1970? How do you even have a computer?")
-        .as_secs();
+        .as_secs()
+}
 
-    let duration = now.saturating_sub(entry.last_accessed);
-    let factor = if duration < HOUR {
+pub fn factor(now: u64, last_accessed: u64) -> f64 {
+    let duration = now.saturating_sub(last_accessed);
+    if duration < HOUR {
         4.0
     } else if duration < DAY {
         2.0
@@ -34,10 +33,14 @@ pub fn rank(entry: Entry) -> Entry {
         0.5
     } else {
         0.25
-    };
+    }
+}
 
-    entry.frecency = entry.frecency * factor + 1.0;
-    entry.last_accessed = now;
+pub fn rank(entry: Entry) -> Entry {
+    let mut entry = entry;
+
+    entry.frecency += 1.0;
+    entry.last_accessed = now_secs();
     entry
 }
 

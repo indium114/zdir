@@ -1,4 +1,4 @@
-use crate::util::{Entry, matches};
+use crate::util::{Entry, factor, matches, now_secs};
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::{
     fs,
@@ -165,6 +165,7 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                     false => {
                         let read_txn = comms_db.begin_read().unwrap();
                         let table = read_txn.open_table(TABLE).unwrap();
+                        let now = now_secs();
 
                         let matches: Vec<String> = table
                             .iter()
@@ -172,10 +173,10 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                             .map(|entry| {
                                 let (path, value) = entry.unwrap();
                                 let path = path.value();
-                                let (frecency, _last_accessed) = value.value();
+                                let (frecency, last_accessed) = value.value();
 
                                 if matches(&path, query.split(' ').collect()) {
-                                    frecency.to_string() + ":" + &path
+                                    (frecency * factor(now, last_accessed)).to_string() + ":" + &path
                                 } else {
                                     "".to_string()
                                 }
