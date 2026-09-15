@@ -26,5 +26,16 @@ def --env --wrapped __zdir_zd [...args: string] {
   cd $path
 }
 
+# MARK: interactive function
+def --env --wrapped __zdir_zi [...args: string] {
+  let tmp = (mktemp --tmpdir zdir_XXXXXX)
+  (^zdir $tmp ...$args)
+  let path = (open $tmp | str trim -r -c "\n")
+  rm $tmp
+
+  cd $path
+}
+
 # MARK: EDITME: aliases
 alias zd = __zdir_zd
+alias zi = __zdir_zi
