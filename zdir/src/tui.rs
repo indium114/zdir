@@ -100,5 +100,8 @@ pub fn tui(results: Vec<(f64, String)>) -> String {
         viewport: Viewport::Inline(10),
     });
 
-    App::new(results).run(&mut terminal)
+    let result = App::new(results).run(&mut terminal);
+
+    ratatui::restore();
+    result
 }
