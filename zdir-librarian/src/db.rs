@@ -5,7 +5,7 @@ use std::{
     path::Path,
     sync::{Arc, mpsc},
     thread,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tracing::{info, warn};
 
@@ -21,6 +21,20 @@ fn db_path() -> String {
         .map(|p| p.to_string_lossy().into_owned())
         .unwrap_or_default();
     home + "/.local/share/zdir/zdir.db"
+}
+
+fn prune(db: Arc<Database>) {
+    info!("Pruning");
+
+    let write_txn = db.begin_write().unwrap();
+    {
+        let mut table = write_txn.open_table(TABLE).unwrap();
+        table
+            .retain(|path, _| Path::new(&path).is_dir())
+            .unwrap();
+    }
+    write_txn.commit().unwrap();
+    info!("Finished pruning");
 }
 
 fn score(db: Arc<Database>, entry: Entry) {
@@ -98,6 +112,15 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
     };
     let db = Arc::new(db);
 
+    // MARK: housekeeping thread
+    let housekeeping_db = db.clone();
+    let housekeeping_thread = thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(30 * 60));
+            prune(housekeeping_db.clone());
+        }
+    });
+
     // MARK: comms thread
     let comms_db = db.clone();
     #[allow(unused_variables)]
@@ -169,4 +192,5 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
     });
 
     comms_thread.join().unwrap();
+    housekeeping_thread.join().unwrap();
 }

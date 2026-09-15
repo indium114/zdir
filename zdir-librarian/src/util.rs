@@ -34,7 +34,7 @@ pub fn rank(entry: Entry) -> Entry {
         0.5
     } else {
         0.25
-    }
+    };
 
     entry.frecency = entry.frecency * factor + 1.0;
     entry.last_accessed = now;
