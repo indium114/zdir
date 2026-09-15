@@ -1,6 +1,6 @@
 # zdir
 
-![preview of zdir's tui directory selector](assets/preview.png)
+![preview of zdir's tui directory selector](https://github.com/indium114/zdir/blob/main/assets/preview.png)
 
 _zdir_ (pronounced 'zee-dir', like 'cedar') is a blazingly-faster `cd` alternative, inspired by [zoxide](https://github.com/ajeetdsouza/zoxide).
 
