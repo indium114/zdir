@@ -14,17 +14,23 @@ fn socket_path() -> String {
 }
 
 fn main() {
-    let query: String =
+    let mut interactive = false;
+    let mut query: String =
         std::env::args().skip(2).collect::<Vec<String>>().join(" ");
     let path: String = std::env::args().collect::<Vec<String>>()[1].to_string();
 
-    let query: String = match fs::canonicalize(&query) {
+    query = match fs::canonicalize(&query) {
         Ok(p) => p
             .into_os_string()
             .into_string()
             .expect("Path is not valid UTF-8"),
         _ => query,
     };
+
+    if query == "@INTERACTIVE@" {
+        query = "".to_string();
+        interactive = true;
+    }
 
     if !Path::new(&socket_path()).exists() {
         usefulog::err(format!(
@@ -50,10 +56,14 @@ fn main() {
         process::exit(1);
     }
 
-    let close = match results.first().zip(results.get(1)) {
+    let mut close = match results.first().zip(results.get(1)) {
         Some((a, b)) => a.0 - b.0 < 200.0,
         None => false,
     };
+
+    if interactive {
+        close = true;
+    }
 
     match close {
         true => {
