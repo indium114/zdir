@@ -42,7 +42,7 @@
 
         packages.zdir = naersk'.buildPackage {
           src = ./.;
-          version = "0.1.2";
+          version = "0.1.3";
           postInstall = ''
             mkdir -p $out/share/zdir
             cp shell/zdir.nu $out/share/zdir/zdir.nu
