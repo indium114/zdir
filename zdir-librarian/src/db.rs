@@ -176,7 +176,10 @@ pub fn database(tx: mpsc::Sender<String>, rx: mpsc::Receiver<String>) {
                                 let (frecency, last_accessed) = value.value();
 
                                 if matches(&path, query.split(' ').collect()) {
-                                    (frecency * factor(now, last_accessed)).to_string() + ":" + &path
+                                    (frecency * factor(now, last_accessed))
+                                        .to_string()
+                                        + ":"
+                                        + &path
                                 } else {
                                     "".to_string()
                                 }
