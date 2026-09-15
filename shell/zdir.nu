@@ -29,7 +29,7 @@ def --env --wrapped __zdir_zd [...args: string] {
 # MARK: interactive function
 def --env --wrapped __zdir_zi [...args: string] {
   let tmp = (mktemp --tmpdir zdir_XXXXXX)
-  (^zdir $tmp ...$args)
+  zdir $tmp @INTERACTIVE@
   let path = (open $tmp | str trim -r -c "\n")
   rm $tmp
 
