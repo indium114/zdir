@@ -29,9 +29,7 @@ fn prune(db: Arc<Database>) {
     let write_txn = db.begin_write().unwrap();
     {
         let mut table = write_txn.open_table(TABLE).unwrap();
-        table
-            .retain(|path, _| Path::new(&path).is_dir())
-            .unwrap();
+        table.retain(|path, _| Path::new(&path).is_dir()).unwrap();
     }
     write_txn.commit().unwrap();
     info!("Finished pruning");
@@ -67,8 +65,8 @@ fn age(db: Arc<Database>) {
             .iter()
             .unwrap()
             .map(|e| {
-               let (path, value) = e.unwrap();
-               (path.value().to_string(), value.value())
+                let (path, value) = e.unwrap();
+                (path.value().to_string(), value.value())
             })
             .collect();
 
