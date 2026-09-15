@@ -99,7 +99,6 @@ pub fn tui(results: Vec<(f64, String)>) -> String {
     let mut terminal = ratatui::init_with_options(TerminalOptions {
         viewport: Viewport::Inline(10),
     });
-    
 
     App::new(results).run(&mut terminal)
 }
