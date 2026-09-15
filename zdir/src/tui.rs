@@ -69,11 +69,11 @@ impl App {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 match key_event.code {
                     KeyCode::Esc => process::exit(-1),
-                    KeyCode::Up => {
+                    KeyCode::Up | KeyCode::Char('k') => {
                         self.state.select_previous();
                         "".to_string()
                     }
-                    KeyCode::Down => {
+                    KeyCode::Down | KeyCode::Char('j') => {
                         self.state.select_next();
                         "".to_string()
                     }
