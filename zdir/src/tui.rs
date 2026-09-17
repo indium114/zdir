@@ -68,7 +68,10 @@ impl App {
         match event::read().unwrap() {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
                 match key_event.code {
-                    KeyCode::Esc => process::exit(-1),
+                    KeyCode::Esc => {
+                        ratatui::restore();
+                        process::exit(-1)
+                    },
                     KeyCode::Up | KeyCode::Char('k') => {
                         self.state.select_previous();
                         "".to_string()
