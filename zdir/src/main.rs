@@ -57,7 +57,7 @@ fn main() {
     }
 
     let mut close = match results.first().zip(results.get(1)) {
-        Some((a, b)) => a.0 - b.0 < 200.0,
+        Some((a, b)) => a.0 - b.0 < 50.0,
         None => false,
     };
 
