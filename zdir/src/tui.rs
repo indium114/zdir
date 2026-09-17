@@ -71,7 +71,7 @@ impl App {
                     KeyCode::Esc => {
                         ratatui::restore();
                         process::exit(-1)
-                    },
+                    }
                     KeyCode::Up | KeyCode::Char('k') => {
                         self.state.select_previous();
                         "".to_string()
